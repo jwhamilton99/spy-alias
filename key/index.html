@@ -1,0 +1,104 @@
+<html>
+	<head>
+		<style>
+			body {
+            	font-family: Arial, Helvetica, sans-serif;
+            	text-align: center;
+			}
+			
+			button {
+				display: inline-block;
+			}
+			
+			.card {
+				height:85px;
+				width:150px;
+				border:1px solid black;
+				display:inline-block;
+				text-align:center;
+				line-height:85px;
+				border-radius:10px;
+				margin-left:10px;
+			}
+			
+			.row {
+				margin-top:15px;
+			}
+		</style>
+		<script>
+			function getUrlVars() {
+				var vars = {};
+				var parts = window.location.href.replace(/[?&]+([^=&]+)=([^&]*)/gi, function(m,key,value) {
+					vars[key] = value;
+				});
+				return vars;
+			}
+			
+			function loaded() {
+				var input = getUrlVars()["input"].toString();
+				var cards = document.getElementsByClassName("card");
+				for(var i = 0; i < input.length; i++) {
+					switch(parseInt(input.charAt(i))) {
+						case 1:
+							cards[i].style.backgroundColor = "red";
+							break;
+						case 2:
+							cards[i].style.backgroundColor = "blue";
+							break;
+						case 3:
+							cards[i].style.backgroundColor = "black";
+							break;
+						default:
+							cards[i].style.backgroundColor = "gray";
+							break;
+					}
+				}
+			}
+
+		</script>
+	</head>
+	<body onload="loaded()">
+		<div id="header">
+			<div class="headerContent" id="title">
+				<h1>SpyAlias</h1>
+			</div>
+		</div>
+		<div id="cards">
+			<div id="row1" class="row">
+				<div class="card" onclick="revealCard(0)"></div>
+				<div class="card" onclick="revealCard(1)"></div>
+				<div class="card" onclick="revealCard(2)"></div>
+				<div class="card" onclick="revealCard(3)"></div>
+				<div class="card" onclick="revealCard(4)"></div>
+			</div>
+			<div id="row2" class="row">
+				<div class="card" onclick="revealCard(5)"></div>
+				<div class="card" onclick="revealCard(6)"></div>
+				<div class="card" onclick="revealCard(7)"></div>
+				<div class="card" onclick="revealCard(8)"></div>
+				<div class="card" onclick="revealCard(9)"></div>
+			</div>
+			<div id="row3" class="row">
+				<div class="card" onclick="revealCard(10)"></div>
+				<div class="card" onclick="revealCard(11)"></div>
+				<div class="card" onclick="revealCard(12)"></div>
+				<div class="card" onclick="revealCard(13)"></div>
+				<div class="card" onclick="revealCard(14)"></div>
+			</div>
+			<div id="row4" class="row">
+				<div class="card" onclick="revealCard(15)"></div>
+				<div class="card" onclick="revealCard(16)"></div>
+				<div class="card" onclick="revealCard(17)"></div>
+				<div class="card" onclick="revealCard(18)"></div>
+				<div class="card" onclick="revealCard(19)"></div>
+			</div>
+			<div id="row5" class="row">
+				<div class="card" onclick="revealCard(20)"></div>
+				<div class="card" onclick="revealCard(21)"></div>
+				<div class="card" onclick="revealCard(22)"></div>
+				<div class="card" onclick="revealCard(23)"></div>
+				<div class="card" onclick="revealCard(24)"></div>
+			</div>
+		</div>
+	</body>
+</html>
