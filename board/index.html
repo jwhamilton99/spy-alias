@@ -4,25 +4,45 @@
 			body {
             	font-family: Arial, Helvetica, sans-serif;
             	text-align: center;
+            	user-select:none;
+            	overflow:hidden;
 			}
 			
 			button {
 				display: inline-block;
+				width:100px;
+				height:50px;
+				background-color:lightgray;
+				border:1px solid black;
+				border-radius:10px;
+				font-size:15px;
+				cursor:pointer;
 			}
 			
 			.card {
 				height:85px;
-				width:150px;
+				width:15%;
+				max-width:150px;
 				border:1px solid black;
 				display:inline-block;
 				text-align:center;
 				line-height:85px;
 				border-radius:10px;
 				margin-left:10px;
+				background-color:white;
+				transition: all .3s ease-in-out;
 			}
 			
 			.row {
 				margin-top:15px;
+			}
+			
+			#header {
+				height:75px;
+				display:flex;
+				margin-bottom:25px;
+				justify-content:center;
+				align-items:center;
 			}
 			
 			.headerContent {
@@ -30,21 +50,58 @@
 			}
 			
 			#indicator {
-				
+				width:200px;
+				height:50px;
+				margin-left:200px;
+				margin-right:200px;
+				border:1px solid black;
+				border-radius:10px;
+				display:flex;
+				align-items:center;
+				justify-content:center;
+				transition: all .15s ease-in-out;
+				background-color:white;
 			}
 			
 			#title {
-			position:relative;
-				margin-left: 0;
+				position:absolute;
+				left:25px;
 			}
 			
 			#newButton {
-			position:relative;
-				margin-right: 0;
+				position:absolute;
+				right:25px;
 			}
 			
 			#score {
-				
+				margin-top:25px;
+				height:60px;
+				width:100%;
+				border-radius:10px;
+				border:1px solid black;
+			}
+			
+			#blueLeft, #redLeft {
+				width:50%;
+				height:60px;
+				display:flex;
+				align-items:center;
+				justify-content:center;
+				color:white;
+				transition: width .3s, color .15s ease-in-out;
+			}
+			
+			#blueLeft {
+				float:right;
+				background-color:blue;
+				border-top-right-radius:10px;
+				border-bottom-right-radius:10px;
+			}
+			#redLeft {
+				float:left;
+				background-color:red;
+				border-top-left-radius:10px;
+				border-bottom-left-radius:10px;
 			}
 			
 			#modalContainer {
@@ -59,13 +116,15 @@
 				align-items:center;
 				background-color: rgba(0, 0, 0, 0.4);
 				opacity:0;
-				transition: opacity .5s;
+				transition:all .3s ease-in-out;
 			}
 			
 			#modal {
 				background-color:white;
 				padding:20px;
 				border-radius: 20px;
+				margin-top:500px;
+				transition:all .3s ease-out;
 			}
 			
 			#qrOut {
@@ -83,13 +142,25 @@
 			//0=neutral, 1=red, 2=blue, 3=assassin
 			var numArr = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 			var gameWords = ["","","","","","","","","","","","","","","","","","","","","","","","",""];
+			var usedArr = [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false];
 			var turn = false;
 			var redLeft; var blueLeft;
 			var gameStarted = false;
+			var showingHidden = false;
+			var masterTransitionTime = 300;
 			
 			function displayModal() {
-				document.getElementById('modalContainer').style.display = 'flex';
 				document.getElementById('modalContainer').style.opacity = 1;
+				document.getElementById("modal").style.marginTop = 0;
+			}
+			
+			function dismissModal() {
+				document.getElementById("modalContainer").style.opacity = 0;
+				document.getElementById("modal").style.marginTop = 500;
+				setTimeout(function(){
+					document.getElementById('modalContainer').style.display = 'none';
+					resetCardsAndGenerateWords();
+				}, masterTransitionTime);
 			}
 			
 			function generateQR() {
@@ -118,162 +189,306 @@
 				displayModal();
 			}
 			
-			function generateBoard() {
-				var cards = document.getElementsByClassName("card");
-				for(var i = 0; i < cards.length; i++) {
-					cards[i].style.color = "black";
-					cards[i].style.backgroundColor = "white";
-				}
-				numArr = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
-				turn = (Math.floor(Math.random()*2)+1 == 1);
-				//assassin
-				numArr[Math.floor(Math.random()*24)] = 3;
-				
-				for(var i = 0; i < 9; i++) {
-					var index = Math.floor(Math.random()*24);
-					while(numArr[index] != 0) {
-						index = Math.floor(Math.random()*24);
-					}
-					numArr[index] = (turn)?1:2;
-				}
-				
-				for(var i = 0; i < 8; i++) {
-					var index = Math.floor(Math.random()*24);
-					while(numArr[index] != 0) {
-						index = Math.floor(Math.random()*24);
-					}
-					numArr[index] = (turn)?2:1;
-				}
-				
-				if(turn) {
-					redLeft = 9;
-					blueLeft = 8;
-				} else {
-					redLeft = 8;
-					blueLeft = 9;
-				}
-				
-				for(var i = 0; i < numArr.length; i++) {
-					var currWord = wordList[Math.floor(Math.random()*wordList.length)];
-					var flag = true;
-					while(flag) {
-						flag = false;
-						for(var w in wordList) {
-							if(w == currWord) {
-								currWord = wordList[Math.floor(Math.random()*wordList.length)];
-								flag = true;
+			function toggleHidden() {
+				if(!gameStarted && document.getElementById("indicator").innerHTML != "Game Not Started") {
+					var cards = document.getElementsByClassName("card");
+					showingHidden = !showingHidden;
+					if(showingHidden) {
+						document.getElementById("indicator").style.color = "white";
+						setTimeout(function(){
+							document.getElementById("indicator").style.backgroundColor = "black";
+							document.getElementById("indicator").innerHTML = "Hide Hidden";
+						},masterTransitionTime/2);
+						for(var i = 0; i < cards.length; i++) {
+							cards[i].style.color = "white";
+							switch(numArr[i]) {
+								case 1:
+									cards[i].style.backgroundColor = "red";
+									break;
+								case 2:
+									cards[i].style.backgroundColor = "blue";
+									break;
+								case 3:
+									cards[i].style.backgroundColor = "black";
+									break;
+								default:
+									cards[i].style.backgroundColor = "gray";
+									break;
+							}
+						}
+					} else {
+						document.getElementById("indicator").style.color = "black";
+						setTimeout(function(){
+							document.getElementById("indicator").style.backgroundColor = "white";
+							document.getElementById("indicator").innerHTML = "Show Hidden";
+						},masterTransitionTime/2);
+						for(var i = 0; i < cards.length; i++) {
+							if(!usedArr[i]) {
+								cards[i].style.color = "black";
+								cards[i].style.backgroundColor = "white";
+							} else {
+								switch(numArr[i]) {
+									case 1:
+										cards[i].style.backgroundColor = "red";
+										cards[i].style.color = "red";
+										break;
+									case 2:
+										cards[i].style.backgroundColor = "blue";
+										cards[i].style.color = "blue";
+										break;
+									case 3:
+										cards[i].style.backgroundColor = "black";
+										cards[i].style.color = "black";
+										break;
+									default:
+										cards[i].style.backgroundColor = "gray";
+										cards[i].style.color = "gray";
+										break;
+								}
 							}
 						}
 					}
-					cards[i].innerHTML = currWord;
+				}
+			}
+			
+			function generateBoard() {
+				if(!gameStarted || (gameStarted && window.confirm("Are you sure?"))) {
+					document.getElementById('modalContainer').style.display = 'flex';
+					numArr = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+					usedArr = [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false];
+					
+					turn = (Math.floor(Math.random()*2)+1 == 1);
+					//assassin
+					numArr[Math.floor(Math.random()*24)] = 3;
+				
+					for(var i = 0; i < 9; i++) {
+						var index = Math.floor(Math.random()*24);
+						while(numArr[index] != 0) {
+							index = Math.floor(Math.random()*24);
+						}
+						numArr[index] = (turn)?1:2;
+					}
+				
+					for(var i = 0; i < 8; i++) {
+						var index = Math.floor(Math.random()*24);
+						while(numArr[index] != 0) {
+							index = Math.floor(Math.random()*24);
+						}
+						numArr[index] = (turn)?2:1;
+					}
+				
+					if(turn) {
+						redLeft = 9;
+						blueLeft = 8;
+					} else {
+						redLeft = 8;
+						blueLeft = 9;
+					}
+				
+					generateQR();
+				}
+			}
+			
+			function resetCardsAndGenerateWords() {
+				var cards = document.getElementsByClassName("card");
+				showingHidden = false;
+				document.getElementById("indicator").style.cursor = "default";
+				
+				var rows = document.getElementsByClassName("row");
+				
+				for(var i = 0; i < cards.length; i++) {
+					cards[i].style.backgroundColor = "white";
+					cards[i].style.cursor = "pointer";
+					cards[i].style.color = "white";
 				}
 				
-				document.getElementById("indicator").innerHTML = (((turn)?"Red":"Blue")+"'s Turn");
-				document.getElementById("score").innerHTML = ("Red: "+redLeft+", Blue: "+blueLeft);
+				document.getElementById("redLeft").style.color = "red";
+				document.getElementById("blueLeft").style.color = "blue";
+				document.getElementById("indicator").style.color = "white";
+				document.getElementById("indicator").style.backgroundColor = "white";
+				
+				setTimeout(function(){
+					for(var i = 0; i < numArr.length; i++) {
+						var currWord = wordList[Math.floor(Math.random()*wordList.length)];
+						var flag = true;
+						while(flag) {
+							flag = false;
+							for(var w in wordList) {
+								if(w == currWord) {
+									currWord = wordList[Math.floor(Math.random()*wordList.length)];
+									flag = true;
+								}
+							}
+						}
+						cards[i].innerHTML = currWord;
+						cards[i].style.color = "black";
+					}
+					for(var i = 0; i < rows.length; i++) {
+						rows[i].style.marginTop = "20px";
+					}
+					document.getElementById("indicator").innerHTML = (((turn)?"Red":"Blue")+"'s Turn");
+					document.getElementById("indicator").style.backgroundColor = (((turn)?"Red":"Blue"));
+					document.getElementById("indicator").style.color = "white";
+					document.getElementById("redLeft").style.color = "white";
+					document.getElementById("blueLeft").style.color = "white";
+					document.getElementById("redLeft").innerHTML = (redLeft+" Left");
+					document.getElementById("blueLeft").innerHTML = (blueLeft+" Left");
+					var totalLeft = redLeft+blueLeft;
+									
+					document.getElementById("redLeft").style.width = ((100-((redLeft/totalLeft)*100))+"%");
+					document.getElementById("blueLeft").style.width = ((100-((blueLeft/totalLeft)*100))+"%");
+					document.getElementById("redLeft").style.borderBottomRightRadius = "0px";
+					document.getElementById("redLeft").style.borderTopRightRadius = "0px";
+					document.getElementById("blueLeft").style.borderBottomLeftRadius = "0px";
+					document.getElementById("blueLeft").style.borderTopLeftRadius = "0px";
+				},masterTransitionTime);
 				
 				gameStarted = true;
-				
-				generateQR();
 			}
 			
 			function revealCard(index) {
-				if(gameStarted) {
-					var cards = document.getElementsByClassName("card");
-					switch(numArr[index]) {
-					case 1:
-						cards[index].style.backgroundColor = "red";
-						cards[index].style.color = "red";
-						redLeft--;
-						break;
-					case 2:
-						cards[index].style.backgroundColor = "blue";
-						cards[index].style.color = "blue";
-						blueLeft--;
-						break;
-					case 3:
-						cards[index].style.backgroundColor = "black";
-						cards[index].style.color = "black";
-						gameStarted = false;
-						document.getElementById("indicator").innerHTML = (((turn)?"Red":"Blue")+" Wins!");
-						break;
-					default:
-						cards[index].style.backgroundColor = "gray";
-						cards[index].style.color = "gray";
-						break;
-					}
-				
+				if(!usedArr[index]) {
 					if(gameStarted) {
-						if(blueLeft <= 0 || redLeft <= 0) {
-							gameStarted = false;
-							if(blueLeft <= 0) {
-								document.getElementById("indicator").innerHTML = ("Blue Wins!");
+						var cards = document.getElementsByClassName("card");
+						cards[index].style.cursor = "default";
+						switch(numArr[index]) {
+						case 1:
+							cards[index].style.backgroundColor = "red";
+							cards[index].style.color = "red";
+							document.getElementById("redLeft").style.color = "red";
+							redLeft--;
+							break;
+						case 2:
+							cards[index].style.backgroundColor = "blue";
+							cards[index].style.color = "blue";
+							document.getElementById("blueLeft").style.color = "blue";
+							blueLeft--;
+							break;
+						case 3:
+							cards[index].style.backgroundColor = "black";
+							cards[index].style.color = "black";
+							if(turn) {
+								blueLeft = 0;
 							} else {
-								document.getElementById("indicator").innerHTML = ("Red Wins!");
+								redLeft = 0;
 							}
-						} else {
-							turn = !turn;
-							document.getElementById("indicator").innerHTML = (((turn)?"Red":"Blue")+"'s Turn");
-							document.getElementById("score").innerHTML = ("Red: "+redLeft+", Blue: "+blueLeft);
+							break;
+						default:
+							cards[index].style.backgroundColor = "gray";
+							cards[index].style.color = "gray";
+							break;
+						}
+				
+						if(gameStarted) {
+							if(blueLeft <= 0 || redLeft <= 0) {
+								document.getElementById("indicator").style.backgroundColor = "white";
+								document.getElementById("indicator").style.color = "black";
+								document.getElementById("indicator").innerHTML = "Show Hidden";
+								document.getElementById("indicator").style.cursor = "pointer";
+								for(var i = 0; i < cards.length; i++) {
+									cards[i].style.cursor = "default";
+								}
+								document.getElementById("redLeft").style.color = "white";
+								document.getElementById("blueLeft").style.color = "white";
+								gameStarted = false;
+								if(blueLeft <= 0) {
+									document.getElementById("blueLeft").innerHTML = ("Blue Wins!");
+									document.getElementById("redLeft").innerHTML = ("");
+									document.getElementById("redLeft").style.width = ("0%");
+									document.getElementById("blueLeft").style.width = ("100%");
+									document.getElementById("blueLeft").style.borderRadius = ("10px");
+									
+								} else {
+									document.getElementById("redLeft").innerHTML = ("Red Wins!");
+									document.getElementById("blueLeft").innerHTML = ("");
+									document.getElementById("redLeft").style.width = ("100%");
+									document.getElementById("blueLeft").style.width = ("0%");
+									document.getElementById("redLeft").style.borderRadius = ("10px");
+								}
+							} else {
+								document.getElementById("indicator").style.color = (((turn)?"Red":"Blue"));
+								setTimeout(function(){
+									turn = !turn;
+									
+									var totalLeft = redLeft+blueLeft;
+									
+									document.getElementById("redLeft").style.width = ((100-((redLeft/totalLeft)*100))+"%");
+									document.getElementById("blueLeft").style.width = ((100-((blueLeft/totalLeft)*100))+"%");
+									
+									document.getElementById("indicator").style.color = "white";
+									document.getElementById("indicator").innerHTML = (((turn)?"Red":"Blue")+"'s Turn");
+									document.getElementById("indicator").style.backgroundColor = (((turn)?"Red":"Blue"));
+									document.getElementById("redLeft").innerHTML = (redLeft+" Left");
+									document.getElementById("blueLeft").innerHTML = (blueLeft+" Left");
+									document.getElementById("redLeft").style.color = "white";
+									document.getElementById("blueLeft").style.color = "white";
+								},masterTransitionTime/2);
+							}
 						}
 					}
 				}
+				usedArr[index] = true;
 			}
 		</script>
 	</head>
 	<body>
-		<div id="header">
-			<div class="headerContent" id="title">
-				<h1>SpyAlias</h1>
+		<div id="container">
+			<div id="header">
+				<div class="headerContent" id="title">
+					<h1>SpyAlias</h1>
+				</div>
+				<div class="headerContent" id="indicator" onclick="toggleHidden()">Game Not Started</div>
+				<div class="headerContent" id="newButton">
+					<button onclick="generateBoard()">New Game</button>
+				</div>
 			</div>
-			<div class="headerContent" id="indicator"></div>
-			<div class="headerContent" id="newButton">
-				<button onclick="generateBoard()">New Board</button>
+			<div id="cards">
+				<div id="row1" class="row">
+					<div class="card" onclick="revealCard(0)"></div>
+					<div class="card" onclick="revealCard(1)"></div>
+					<div class="card" onclick="revealCard(2)"></div>
+					<div class="card" onclick="revealCard(3)"></div>
+					<div class="card" onclick="revealCard(4)"></div>
+				</div>
+				<div id="row2" class="row">
+					<div class="card" onclick="revealCard(5)"></div>
+					<div class="card" onclick="revealCard(6)"></div>
+					<div class="card" onclick="revealCard(7)"></div>
+					<div class="card" onclick="revealCard(8)"></div>
+					<div class="card" onclick="revealCard(9)"></div>
+				</div>
+				<div id="row3" class="row">
+					<div class="card" onclick="revealCard(10)"></div>
+					<div class="card" onclick="revealCard(11)"></div>
+					<div class="card" onclick="revealCard(12)"></div>
+					<div class="card" onclick="revealCard(13)"></div>
+					<div class="card" onclick="revealCard(14)"></div>
+				</div>
+				<div id="row4" class="row">
+					<div class="card" onclick="revealCard(15)"></div>
+					<div class="card" onclick="revealCard(16)"></div>
+					<div class="card" onclick="revealCard(17)"></div>
+					<div class="card" onclick="revealCard(18)"></div>
+					<div class="card" onclick="revealCard(19)"></div>
+				</div>
+				<div id="row5" class="row">
+					<div class="card" onclick="revealCard(20)"></div>
+					<div class="card" onclick="revealCard(21)"></div>
+					<div class="card" onclick="revealCard(22)"></div>
+					<div class="card" onclick="revealCard(23)"></div>
+					<div class="card" onclick="revealCard(24)"></div>
+				</div>
+			</div>
+			<div id="score">
+				<div id="redLeft">0 Left</div>
+				<div id="blueLeft">0 Left</div>
 			</div>
 		</div>
-		<div id="cards">
-			<div id="row1" class="row">
-				<div class="card" onclick="revealCard(0)"></div>
-				<div class="card" onclick="revealCard(1)"></div>
-				<div class="card" onclick="revealCard(2)"></div>
-				<div class="card" onclick="revealCard(3)"></div>
-				<div class="card" onclick="revealCard(4)"></div>
-			</div>
-			<div id="row2" class="row">
-				<div class="card" onclick="revealCard(5)"></div>
-				<div class="card" onclick="revealCard(6)"></div>
-				<div class="card" onclick="revealCard(7)"></div>
-				<div class="card" onclick="revealCard(8)"></div>
-				<div class="card" onclick="revealCard(9)"></div>
-			</div>
-			<div id="row3" class="row">
-				<div class="card" onclick="revealCard(10)"></div>
-				<div class="card" onclick="revealCard(11)"></div>
-				<div class="card" onclick="revealCard(12)"></div>
-				<div class="card" onclick="revealCard(13)"></div>
-				<div class="card" onclick="revealCard(14)"></div>
-			</div>
-			<div id="row4" class="row">
-				<div class="card" onclick="revealCard(15)"></div>
-				<div class="card" onclick="revealCard(16)"></div>
-				<div class="card" onclick="revealCard(17)"></div>
-				<div class="card" onclick="revealCard(18)"></div>
-				<div class="card" onclick="revealCard(19)"></div>
-			</div>
-			<div id="row5" class="row">
-				<div class="card" onclick="revealCard(20)"></div>
-				<div class="card" onclick="revealCard(21)"></div>
-				<div class="card" onclick="revealCard(22)"></div>
-				<div class="card" onclick="revealCard(23)"></div>
-				<div class="card" onclick="revealCard(24)"></div>
-			</div>
-		</div>
-		<div id="score"></div>
-		
 		<div id="modalContainer">
 			<div id="modal">
 				<h1>Scan on your phone:</h1>
 				<div id="qrOut"></div><br>
-				<button onclick="document.getElementById('modalContainer').style.display = 'none'">Dismiss</button>
+				<button onclick="dismissModal()">OK</button>
 			</div>			
 		</div>
 	</body>

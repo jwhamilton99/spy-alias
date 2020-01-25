@@ -35,22 +35,34 @@
 			}
 			
 			function loaded() {
-				var input = getUrlVars()["input"].toString();
-				var cards = document.getElementsByClassName("card");
-				for(var i = 0; i < input.length; i++) {
-					switch(parseInt(input.charAt(i))) {
-						case 1:
-							cards[i].style.backgroundColor = "red";
-							break;
-						case 2:
-							cards[i].style.backgroundColor = "blue";
-							break;
-						case 3:
-							cards[i].style.backgroundColor = "black";
-							break;
-						default:
-							cards[i].style.backgroundColor = "gray";
-							break;
+				var un = (getUrlVars()["input"]==undefined);
+				
+				var input = "";
+				if(!un) {
+					input = getUrlVars()["input"].toString();
+					var cards = document.getElementsByClassName("card");
+				}
+				
+				
+				
+				if(input.length != 25 || un) {
+					window.alert("invalid input. scan qr code again.");
+				} else {
+					for(var i = 0; i < input.length; i++) {
+						switch(parseInt(input.charAt(i))) {
+							case 1:
+								cards[i].style.backgroundColor = "red";
+								break;
+							case 2:
+								cards[i].style.backgroundColor = "blue";
+								break;
+							case 3:
+								cards[i].style.backgroundColor = "black";
+								break;
+							default:
+								cards[i].style.backgroundColor = "gray";
+								break;
+						}
 					}
 				}
 			}
