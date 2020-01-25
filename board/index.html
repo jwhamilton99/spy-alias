@@ -1,6 +1,14 @@
 <html>
 	<head>
 		<style>
+			@media (prefers-color-scheme: dark) {
+				#title {
+					color:white;
+				}
+				body {
+					background-color:black;
+				}
+			}
 			body {
             	font-family: Arial, Helvetica, sans-serif;
             	text-align: center;
@@ -22,15 +30,40 @@
 			.card {
 				height:85px;
 				width:15%;
-				max-width:150px;
 				border:1px solid black;
 				display:inline-block;
 				text-align:center;
 				line-height:85px;
+				font-size:2vw;
 				border-radius:10px;
 				margin-left:10px;
 				background-color:white;
 				transition: all .3s ease-in-out;
+			}
+			
+			#cards {
+				display:block;
+				width:100%;
+				flex-wrap:nowrap;
+				
+			}
+			
+			#container {
+				position:absolute;
+				top:0;
+				left:0;
+				right:0;
+				bottom:0;
+				display:flex;
+				justify-content:center;
+				align-items:center;
+			}
+			
+			#row1 {
+				margin-top:0;
+			}
+			#row5 {
+				margin-bottom:0;
 			}
 			
 			.row {
@@ -38,11 +71,15 @@
 			}
 			
 			#header {
-				height:75px;
+				height:60px;
 				display:flex;
 				margin-bottom:25px;
 				justify-content:center;
 				align-items:center;
+				position:absolute;
+				left:10;
+				right:10;
+				top:10;
 			}
 			
 			.headerContent {
@@ -66,6 +103,7 @@
 			#title {
 				position:absolute;
 				left:25px;
+				cursor:pointer;
 			}
 			
 			#newButton {
@@ -76,9 +114,12 @@
 			#score {
 				margin-top:25px;
 				height:60px;
-				width:100%;
 				border-radius:10px;
+				bottom:10px;
+				right:10px;
+				left:10px;
 				border:1px solid black;
+				position:absolute;
 			}
 			
 			#blueLeft, #redLeft {
@@ -135,6 +176,11 @@
 				margin-right:auto;
 			}
 			
+			#codeOutput {
+				width:90%;
+				text-align:center;
+			}
+			
 		</style>
 		<script type="text/javascript" src="wordList.js"></script>
 		<script type="text/javascript" src="qrcode.js"></script>
@@ -149,6 +195,10 @@
 			var showingHidden = false;
 			var masterTransitionTime = 300;
 			
+			function redirect() {
+				window.location = "https://www.jwhamilton.co/spyalias"
+			}
+			
 			function displayModal() {
 				document.getElementById('modalContainer').style.opacity = 1;
 				document.getElementById("modal").style.marginTop = 0;
@@ -159,21 +209,21 @@
 				document.getElementById("modal").style.marginTop = 500;
 				setTimeout(function(){
 					document.getElementById('modalContainer').style.display = 'none';
+					document.getElementById("qrOut").innerHTML = "";
 					resetCardsAndGenerateWords();
 				}, masterTransitionTime);
 			}
 			
 			function generateQR() {
 				var inputStr = "https://www.jwhamilton.co/spyalias/key?input=";
+				var codeStr = "";
 				for(var i = 0; i < numArr.length; i++) {
-					inputStr+=numArr[i];
+					codeStr+=numArr[i];
 				}
 				
-				console.log(inputStr);
+				inputStr+=codeStr;
 				
-				for(var i = 0; i < document.getElementById("qrOut").childNodes.length; i++) {
-					document.getElementById("qrOut").removeChild(document.getElementById("qrOut").childNodes[i]);
-				}
+				document.getElementById("codeOutput").value = (btoa(codeStr));
 				
 				var options = {
 					text: inputStr,
@@ -429,19 +479,24 @@
 				}
 				usedArr[index] = true;
 			}
+			
+			function loaded() {
+				var cards = document.getElementsByClassName("card");
+				for(var i = 0; i < cards.length; i++) {
+					cards[i].style.height = (cards[i].offsetWidth*0.56)+"px";
+					cards[i].style.lineHeight =(cards[i].offsetWidth*0.56)+"px";
+				}
+				window.onresize = function(event) {
+					for(var i = 0; i < cards.length; i++) {
+						cards[i].style.height = (cards[i].offsetWidth*0.56)+"px";
+						cards[i].style.lineHeight = (cards[i].offsetWidth*0.56)+"px"; 
+					}
+				}
+			}
 		</script>
 	</head>
-	<body>
+	<body onload="loaded()">
 		<div id="container">
-			<div id="header">
-				<div class="headerContent" id="title">
-					<h1>SpyAlias</h1>
-				</div>
-				<div class="headerContent" id="indicator" onclick="toggleHidden()">Game Not Started</div>
-				<div class="headerContent" id="newButton">
-					<button onclick="generateBoard()">New Game</button>
-				</div>
-			</div>
 			<div id="cards">
 				<div id="row1" class="row">
 					<div class="card" onclick="revealCard(0)"></div>
@@ -479,15 +534,25 @@
 					<div class="card" onclick="revealCard(24)"></div>
 				</div>
 			</div>
-			<div id="score">
+		</div>
+		<div id="header">
+			<div onclick="redirect()" class="headerContent" id="title">
+				<h1>SpyAlias</h1>
+			</div>
+			<div class="headerContent" id="indicator" onclick="toggleHidden()">Game Not Started</div>
+			<div class="headerContent" id="newButton">
+				<button onclick="generateBoard()">New Game</button>
+			</div>
+		</div>
+		<div id="score">
 				<div id="redLeft">0 Left</div>
 				<div id="blueLeft">0 Left</div>
 			</div>
-		</div>
 		<div id="modalContainer">
 			<div id="modal">
 				<h1>Scan on your phone:</h1>
 				<div id="qrOut"></div><br>
+				Didn't work?<br>Copy and paste the code into the key:<br><br><input type="text" id="codeOutput"/><br><br><br>
 				<button onclick="dismissModal()">OK</button>
 			</div>			
 		</div>
