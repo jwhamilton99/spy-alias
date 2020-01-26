@@ -29,35 +29,39 @@
 			}
 			
 			.card {
-				height:85px;
-				width:15%;
+				height: 99%;
+				min-height:15%;
+				max-width:200px;
 				border:1px solid black;
 				display:inline-block;
 				text-align:center;
-				line-height:85px;
+				line-height:14vh;
 				font-size:2vw;
 				border-radius:10px;
-				margin-left:10px;
 				background-color:white;
-				transition: all .3s ease-in-out;
+				transition: color .3s, background-color .3s, opacity .3s ease-in-out;
+				flex-grow:1;
 			}
 			
 			#cards {
-				display:block;
-				width:100%;
-				flex-wrap:nowrap;
-				
+				display:flex;
+				width:80%;
+				flex-direction:column;
+				flex-grow:1;
+				justify-content:space-evenly;
+				align-items:space-between;
 			}
 			
 			#container {
-				position:absolute;
-				top:0;
-				left:0;
-				right:0;
-				bottom:0;
+				min-width:440px;
+				min-height:440px;
 				display:flex;
-				justify-content:center;
+				flex-direction:column;
+				justify-content:space-between;
 				align-items:center;
+				width:100%;
+				height:100%;
+				max-height:100%;
 			}
 			
 			#row1 {
@@ -68,16 +72,21 @@
 			}
 			
 			.row {
-				margin-top:15px;
+				height:18%;
+				width:100%;
+				display:flex;
+				flex-direction:row;
+				justify-content:space-between;
 			}
 			
 			#header {
 				height:60px;
+				max-height:60px;
 				display:flex;
-				margin-bottom:25px;
+				width:100%;
+				margin-bottom:10px;
 				justify-content:center;
 				align-items:center;
-				position:absolute;
 				left:10;
 				right:10;
 				top:10;
@@ -88,10 +97,9 @@
 			}
 			
 			#indicator {
-				width:200px;
+				max-width:200px;
+				width:30%;
 				height:50px;
-				margin-left:200px;
-				margin-right:200px;
 				border:1px solid black;
 				border-radius:10px;
 				display:flex;
@@ -113,14 +121,15 @@
 			}
 			
 			#score {
-				margin-top:25px;
+				margin-top:10px;
 				height:60px;
 				border-radius:10px;
 				bottom:10px;
 				right:10px;
 				left:10px;
 				border:1px solid black;
-				position:absolute;
+				width:100%;
+				max-height:60px;
 			}
 			
 			#blueLeft, #redLeft {
@@ -195,12 +204,14 @@
 			var gameStarted = false;
 			var showingHidden = false;
 			var masterTransitionTime = 300;
+			var modalShowing = false;
 			
 			function redirect() {
 				window.location = "https://www.jwhamilton.co/spyalias"
 			}
 			
 			function displayModal() {
+				modalShowing = true;
 				document.getElementById('modalContainer').style.opacity = 1;
 				document.getElementById("modal").style.marginTop = 0;
 			}
@@ -212,6 +223,7 @@
 					document.getElementById('modalContainer').style.display = 'none';
 					document.getElementById("qrOut").innerHTML = "";
 					resetCardsAndGenerateWords();
+					modalShowing = false;
 				}, masterTransitionTime);
 			}
 			
@@ -374,9 +386,6 @@
 						cards[i].innerHTML = currWord;
 						cards[i].style.color = "black";
 					}
-					for(var i = 0; i < rows.length; i++) {
-						rows[i].style.marginTop = "20px";
-					}
 					document.getElementById("indicator").innerHTML = (((turn)?"Red":"Blue")+"'s Turn");
 					document.getElementById("indicator").style.backgroundColor = (((turn)?"Red":"Blue"));
 					document.getElementById("indicator").style.color = "white";
@@ -481,81 +490,75 @@
 				usedArr[index] = true;
 			}
 			
-			function loaded() {
-				var cards = document.getElementsByClassName("card");
-				for(var i = 0; i < cards.length; i++) {
-					cards[i].style.height = (cards[i].offsetWidth*0.56)+"px";
-					cards[i].style.lineHeight =(cards[i].offsetWidth*0.56)+"px";
-				}
-				window.onresize = function(event) {
-					for(var i = 0; i < cards.length; i++) {
-						cards[i].style.height = (cards[i].offsetWidth*0.56)+"px";
-						cards[i].style.lineHeight = (cards[i].offsetWidth*0.56)+"px"; 
+			document.addEventListener("keyup", function(event) {
+				if(modalShowing) {
+					if(event.keyCode == 13) {
+						dismissModal();
 					}
 				}
-			}
+			});
 		</script>
 	</head>
-	<body onload="loaded()">
+	<body>
 		<div id="container">
+			<div id="header">
+				<div onclick="redirect()" class="headerContent" id="title">
+					<h1>SpyAlias</h1>
+				</div>
+				<div class="headerContent" id="indicator" onclick="toggleHidden()">Game Not Started</div>
+				<div class="headerContent" id="newButton">
+					<button onclick="generateBoard()">New Game</button>
+				</div>
+			</div>
 			<div id="cards">
 				<div id="row1" class="row">
 					<div class="card" onclick="revealCard(0)"></div>
-					<div class="card" onclick="revealCard(1)"></div>
-					<div class="card" onclick="revealCard(2)"></div>
-					<div class="card" onclick="revealCard(3)"></div>
-					<div class="card" onclick="revealCard(4)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(1)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(2)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(3)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(4)"></div>
 				</div>
 				<div id="row2" class="row">
 					<div class="card" onclick="revealCard(5)"></div>
-					<div class="card" onclick="revealCard(6)"></div>
-					<div class="card" onclick="revealCard(7)"></div>
-					<div class="card" onclick="revealCard(8)"></div>
-					<div class="card" onclick="revealCard(9)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(6)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(7)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(8)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(9)"></div>
 				</div>
 				<div id="row3" class="row">
 					<div class="card" onclick="revealCard(10)"></div>
-					<div class="card" onclick="revealCard(11)"></div>
-					<div class="card" onclick="revealCard(12)"></div>
-					<div class="card" onclick="revealCard(13)"></div>
-					<div class="card" onclick="revealCard(14)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(11)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(12)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(13)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(14)"></div>
 				</div>
 				<div id="row4" class="row">
 					<div class="card" onclick="revealCard(15)"></div>
-					<div class="card" onclick="revealCard(16)"></div>
-					<div class="card" onclick="revealCard(17)"></div>
-					<div class="card" onclick="revealCard(18)"></div>
-					<div class="card" onclick="revealCard(19)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(16)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(17)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(18)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(19)"></div>
 				</div>
 				<div id="row5" class="row">
 					<div class="card" onclick="revealCard(20)"></div>
-					<div class="card" onclick="revealCard(21)"></div>
-					<div class="card" onclick="revealCard(22)"></div>
-					<div class="card" onclick="revealCard(23)"></div>
-					<div class="card" onclick="revealCard(24)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(21)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(22)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(23)"></div>
+					<div class="card" style="margin-left:10px" onclick="revealCard(24)"></div>
 				</div>
 			</div>
-		</div>
-		<div id="header">
-			<div onclick="redirect()" class="headerContent" id="title">
-				<h1>SpyAlias</h1>
+			<div id="score">
+					<div id="redLeft">0 Left</div>
+					<div id="blueLeft">0 Left</div>
+				</div>
+			<div id="modalContainer">
+				<div id="modal">
+					<h1>Scan on your phone:</h1>
+					<div id="qrOut"></div><br>
+					Didn't work?<br>Copy and paste the code into the key:<br><br><input type="text" id="codeOutput"/><br><br><br>
+					<button onclick="dismissModal()">OK</button>
+				</div>			
 			</div>
-			<div class="headerContent" id="indicator" onclick="toggleHidden()">Game Not Started</div>
-			<div class="headerContent" id="newButton">
-				<button onclick="generateBoard()">New Game</button>
-			</div>
-		</div>
-		<div id="score">
-				<div id="redLeft">0 Left</div>
-				<div id="blueLeft">0 Left</div>
-			</div>
-		<div id="modalContainer">
-			<div id="modal">
-				<h1>Scan on your phone:</h1>
-				<div id="qrOut"></div><br>
-				Didn't work?<br>Copy and paste the code into the key:<br><br><input type="text" id="codeOutput"/><br><br><br>
-				<button onclick="dismissModal()">OK</button>
-			</div>			
 		</div>
 	</body>
 </html>
