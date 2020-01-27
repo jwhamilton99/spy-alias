@@ -191,6 +191,16 @@
 				text-align:center;
 			}
 			
+			.timerControl {
+				display:inline;
+			}
+			
+			#toggleTimerButton {
+				font-size:15px;
+				width:150px;
+				height:40px;
+			}
+			
 		</style>
 		<script type="text/javascript" src="wordList.js"></script>
 		<script type="text/javascript" src="qrcode.js"></script>
@@ -205,6 +215,13 @@
 			var showingHidden = false;
 			var masterTransitionTime = 300;
 			var modalShowing = false;
+			var timerEnabled = false;
+			var timerDuration = 30;
+			var currentTimerPosition;
+			var turnTimeout;
+			var indicatorBaseText = "";
+			var passConfirmVisible = false;
+			var passConfirmTimeout = 0;
 			
 			function redirect() {
 				window.location = "https://www.jwhamilton.co/spyalias"
@@ -237,6 +254,13 @@
 				inputStr+=codeStr;
 				
 				document.getElementById("codeOutput").value = (btoa(codeStr));
+				if(!timerEnabled) {
+					document.getElementById("timerDurationControl").disabled = true;
+					document.getElementById("timerDurationControl").value = "Timer Not Enabled";
+				} else {
+					document.getElementById("timerDurationControl").value = timerDuration;
+					document.getElementById("timerDurationControl").disabled = false;
+				}
 				
 				var options = {
 					text: inputStr,
@@ -311,11 +335,63 @@
 							}
 						}
 					}
+				} else if(gameStarted) {
+					if(passConfirmVisible) {
+						if(!timerEnabled) {
+							window.clearTimeout(turnTimeout);
+						}
+						changeTurn();
+					} else {
+						passConfirmTimeout = 5;
+						passConfirmVisible = true;
+						document.getElementById("indicator").style.color = (((turn)?"Red":"Blue"));
+						setTimeout(function() {
+							document.getElementById("indicator").innerHTML = "Tap Again To Pass";
+							document.getElementById("indicator").style.color = "white";
+							if(!timerEnabled) {
+								turnTimeout = window.setTimeout(function(){gameTimerTick();},1000);
+							}
+						},masterTransitionTime/2);
+					}
 				}
+			}
+			
+			function gameTimerTick() {
+				if(timerEnabled) {
+					currentTimerPosition--;
+				}
+				if(passConfirmVisible) {
+					passConfirmTimeout--;
+					if(passConfirmTimeout == 0) {
+						console.log("it works");
+						passConfirmVisible = false;
+						document.getElementById("indicator").style.color = (((turn)?"Red":"Blue"));
+						setTimeout(function() {
+							if(timerEnabled) {
+								document.getElementById("indicator").innerHTML = (((turn)?"Red":"Blue")+"'s Turn ("+currentTimerPosition+")");
+							} else {
+								document.getElementById("indicator").innerHTML = (((turn)?"Red":"Blue")+"'s Turn");
+							}
+							document.getElementById("indicator").style.color = "white";
+							if(!timerEnabled) {
+								window.clearTimeout(turnTimeout);
+							}
+						},masterTransitionTime/2);
+					}
+				} else {
+					document.getElementById("indicator").innerHTML = indicatorBaseText+" ("+currentTimerPosition+")";
+				}
+				if(timerEnabled) {
+					if(currentTimerPosition == 0) {
+						changeTurn();
+					}
+				}
+				turnTimeout = window.setTimeout(function(){gameTimerTick();},1000);
 			}
 			
 			function generateBoard() {
 				if(!gameStarted || (gameStarted && window.confirm("Are you sure?"))) {
+					window.clearTimeout(turnTimeout);
 					document.getElementById('modalContainer').style.display = 'flex';
 					numArr = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
 					usedArr = [false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false];
@@ -355,7 +431,7 @@
 			function resetCardsAndGenerateWords() {
 				var cards = document.getElementsByClassName("card");
 				showingHidden = false;
-				document.getElementById("indicator").style.cursor = "default";
+				document.getElementById("indicator").style.cursor = "pointer";
 				
 				var rows = document.getElementsByClassName("row");
 				
@@ -363,6 +439,7 @@
 					cards[i].style.backgroundColor = "white";
 					cards[i].style.cursor = "pointer";
 					cards[i].style.color = "white";
+					cards[i].style.opacity = 0;
 				}
 				
 				document.getElementById("redLeft").style.color = "red";
@@ -385,8 +462,10 @@
 						}
 						cards[i].innerHTML = currWord;
 						cards[i].style.color = "black";
+						cards[i].style.opacity = 1;
 					}
 					document.getElementById("indicator").innerHTML = (((turn)?"Red":"Blue")+"'s Turn");
+					indicatorBaseText = document.getElementById("indicator").innerHTML;
 					document.getElementById("indicator").style.backgroundColor = (((turn)?"Red":"Blue"));
 					document.getElementById("indicator").style.color = "white";
 					document.getElementById("redLeft").style.color = "white";
@@ -401,9 +480,44 @@
 					document.getElementById("redLeft").style.borderTopRightRadius = "0px";
 					document.getElementById("blueLeft").style.borderBottomLeftRadius = "0px";
 					document.getElementById("blueLeft").style.borderTopLeftRadius = "0px";
+					
+					if(timerEnabled) {
+						timerDuration = parseInt(document.getElementById("timerDurationControl").value);
+						currentTimerPosition = timerDuration;
+						turnTimeout = window.setTimeout(function(){gameTimerTick();},1000);
+						document.getElementById("indicator").innerHTML+=" ("+currentTimerPosition+")";
+					}
 				},masterTransitionTime);
 				
 				gameStarted = true;
+			}
+			
+			function changeTurn() {
+				document.getElementById("indicator").style.color = (((turn)?"Red":"Blue"));
+				setTimeout(function(){
+					turn = !turn;
+					
+					var totalLeft = redLeft+blueLeft;
+					
+					document.getElementById("redLeft").style.width = ((100-((redLeft/totalLeft)*100))+"%");
+					document.getElementById("blueLeft").style.width = ((100-((blueLeft/totalLeft)*100))+"%");
+					
+					document.getElementById("indicator").style.color = "white";
+					document.getElementById("indicator").innerHTML = (((turn)?"Red":"Blue")+"'s Turn");
+					indicatorBaseText = document.getElementById("indicator").innerHTML;
+					document.getElementById("indicator").style.backgroundColor = (((turn)?"Red":"Blue"));
+					document.getElementById("redLeft").innerHTML = (redLeft+" Left");
+					document.getElementById("blueLeft").innerHTML = (blueLeft+" Left");
+					document.getElementById("redLeft").style.color = "white";
+					document.getElementById("blueLeft").style.color = "white";
+					if(timerEnabled) {
+						window.clearTimeout(turnTimeout);
+						currentTimerPosition=timerDuration;
+						passConfirmVisible = false;
+						turnTimeout = window.setTimeout(function(){gameTimerTick()},1000);
+						document.getElementById("indicator").innerHTML+=" ("+currentTimerPosition+")";
+					}
+				},masterTransitionTime/2);
 			}
 			
 			function revealCard(index) {
@@ -445,6 +559,7 @@
 								document.getElementById("indicator").style.color = "black";
 								document.getElementById("indicator").innerHTML = "Show Hidden";
 								document.getElementById("indicator").style.cursor = "pointer";
+								window.clearTimeout(turnTimeout);
 								for(var i = 0; i < cards.length; i++) {
 									cards[i].style.cursor = "default";
 								}
@@ -466,28 +581,25 @@
 									document.getElementById("redLeft").style.borderRadius = ("10px");
 								}
 							} else {
-								document.getElementById("indicator").style.color = (((turn)?"Red":"Blue"));
-								setTimeout(function(){
-									turn = !turn;
-									
-									var totalLeft = redLeft+blueLeft;
-									
-									document.getElementById("redLeft").style.width = ((100-((redLeft/totalLeft)*100))+"%");
-									document.getElementById("blueLeft").style.width = ((100-((blueLeft/totalLeft)*100))+"%");
-									
-									document.getElementById("indicator").style.color = "white";
-									document.getElementById("indicator").innerHTML = (((turn)?"Red":"Blue")+"'s Turn");
-									document.getElementById("indicator").style.backgroundColor = (((turn)?"Red":"Blue"));
-									document.getElementById("redLeft").innerHTML = (redLeft+" Left");
-									document.getElementById("blueLeft").innerHTML = (blueLeft+" Left");
-									document.getElementById("redLeft").style.color = "white";
-									document.getElementById("blueLeft").style.color = "white";
-								},masterTransitionTime/2);
+								changeTurn();
 							}
 						}
 					}
 				}
 				usedArr[index] = true;
+			}
+			
+			function toggleTimer() {
+				timerEnabled = !timerEnabled;
+				if(timerEnabled) {
+					document.getElementById("toggleTimerButton").innerHTML = "Disable Timer";
+					document.getElementById("timerDurationControl").disabled = false;
+					document.getElementById("timerDurationControl").value = timerDuration;
+				} else {
+					document.getElementById("toggleTimerButton").innerHTML = "Enable Timer";
+					document.getElementById("timerDurationControl").disabled = true;
+					document.getElementById("timerDurationControl").value = "Timer Not Enabled";
+				}
 			}
 			
 			document.addEventListener("keyup", function(event) {
@@ -555,7 +667,12 @@
 				<div id="modal">
 					<h1>Scan on your phone:</h1>
 					<div id="qrOut"></div><br>
-					Didn't work?<br>Copy and paste the code into the key:<br><br><input type="text" id="codeOutput"/><br><br><br>
+					<div id="timerSelection">
+						<button id="toggleTimerButton" onclick="toggleTimer()">Enable Timer</button><br><br>
+						<p class="timerControl">Duration: </p>
+						<input class="timerControl" id="timerDurationControl" disabled type="text" placeholder="Enter Duration (Seconds)" value="Timer Not Enabled"></input><br><br>
+					</div>
+					QR didn't work?<br>Copy and paste the code into the key:<br><br><input type="text" id="codeOutput"/><br><br><br>
 					<button onclick="dismissModal()">OK</button>
 				</div>			
 			</div>
